@@ -104,6 +104,7 @@ extern uint64 sys_unlink(void);
 extern uint64 sys_wait(void);
 extern uint64 sys_write(void);
 extern uint64 sys_uptime(void);
+extern uint64 sys_trace(void);
 
 static uint64 (*syscalls[])(void) = {
 [SYS_fork]    sys_fork,
@@ -127,7 +128,78 @@ static uint64 (*syscalls[])(void) = {
 [SYS_link]    sys_link,
 [SYS_mkdir]   sys_mkdir,
 [SYS_close]   sys_close,
+[SYS_trace]   sys_trace
 };
+
+static const char *syscall_str_name(int num) {
+  if (num == 1) {
+    return "fork";
+  }
+  if (num == 2) {
+    return "exit";
+  }
+  if (num == 3) {
+    return "wait";
+  }
+  if (num == 4) {
+    return "pipe";
+  }
+  if (num == 5) {
+    return "read";
+  }
+  if (num == 6) {
+    return "kill";
+  }
+  if (num == 7) {
+    return "exec";
+  }
+  if (num == 8) {
+    return "fstat";
+  }
+  if (num == 9) {
+    return "chdir";
+  }
+  if (num == 10) {
+    return "dup";
+  }
+  if (num == 11) {
+    return "getpid";
+  }
+  if (num == 12) {
+    return "sbrk";
+  }
+  if (num == 13) {
+    return "sleep";
+  }
+  if (num == 14) {
+    return "uptime";
+  }
+  if (num == 15) {
+    return "open";
+  }
+  if (num == 16) {
+    return "write";
+  }
+  if (num == 17) {
+    return "mknod";
+  }
+  if (num == 18) {
+    return "unlink";
+  }
+  if (num == 19) {
+    return "link";
+  }
+  if (num == 20) {
+    return "mkdir";
+  }
+  if (num == 21) {
+    return "close";
+  }
+  if (num == 22) {
+    return "trace";
+  }
+  return "UNKNOWN";
+}
 
 void
 syscall(void)
@@ -138,6 +210,8 @@ syscall(void)
   num = p->trapframe->a7;
   if(num > 0 && num < NELEM(syscalls) && syscalls[num]) {
     p->trapframe->a0 = syscalls[num]();
+    if ((p->trace_flag >> num) & 1)
+      printf("%d: syscall %s -> %d\n", p->pid, syscall_str_name(num), p->trapframe->a0);
   } else {
     printf("%d %s: unknown sys call %d\n",
             p->pid, p->name, num);
