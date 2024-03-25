@@ -657,3 +657,17 @@ procdump(void)
     printf("\n");
   }
 }
+
+uint64 sum_free_procs() {
+  uint64 sum = 0;
+  for (int i = 0; i < NPROC; i++) {
+    acquire(&(proc[i].lock));
+    if (proc[i].state == UNUSED) {
+      release(&(proc[i].lock));
+      continue;
+    }
+    sum++;
+    release(&(proc[i].lock));
+  }
+  return sum;
+}
